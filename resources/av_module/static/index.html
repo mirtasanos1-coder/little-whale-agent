@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>模拟音视频通话 · 本地测试台</title>
+<style>
+  :root {
+    --bg: #0d1017; --panel: #151a24; --panel2: #1b2230; --line: #26303f;
+    --fg: #e6ecf5; --dim: #8f9cb3; --accent: #4c8dff; --ok: #37d67a;
+    --warn: #ffb020; --err: #ff5c5c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: radial-gradient(1200px 600px at 20% -10%, #17233a 0%, var(--bg) 60%);
+    color: var(--fg); font: 14px/1.55 "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+  }
+  header {
+    display: flex; align-items: center; gap: 14px; padding: 14px 20px;
+    border-bottom: 1px solid var(--line); background: #0e131c; position: sticky; top: 0; z-index: 5;
+  }
+  header h1 { font-size: 16px; margin: 0; font-weight: 600; letter-spacing: .5px; }
+  header .tag { font-size: 12px; color: var(--dim); }
+  .pills { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  .pill {
+    font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line);
+    background: var(--panel2); color: var(--dim); white-space: nowrap;
+  }
+  .pill b { color: var(--fg); font-weight: 600; }
+  .pill.ok { border-color: #1d5c3a; color: #9ff0c1; background: #10241a; }
+  .pill.bad { border-color: #6b2a2a; color: #ffb3b3; background: #2a1414; }
+  .wrap { display: grid; grid-template-columns: 1.05fr .95fr; gap: 16px; padding: 16px 20px 40px; }
+  @media (max-width: 1080px) { .wrap { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  .card h2 {
+    font-size: 13px; margin: 0 0 12px; color: var(--accent); font-weight: 600;
+    letter-spacing: .4px; display: flex; align-items: center; gap: 8px;
+  }
+  .card h2 small { color: var(--dim); font-weight: 400; letter-spacing: 0; }
+  label.row { display: flex; align-items: center; gap: 8px; margin: 8px 0; color: var(--dim); font-size: 13px; }
+  label.row > span:first-child { min-width: 74px; }
+  input[type=text], input[type=number], textarea, select {
+    background: #0f141d; color: var(--fg); border: 1px solid var(--line); border-radius: 8px;
+    padding: 7px 9px; font: inherit; width: 100%;
+  }
+  textarea { min-height: 74px; resize: vertical; }
+  input[type=file] { font-size: 12px; color: var(--dim); }
+  .btn {
+    cursor: pointer; border: 1px solid var(--line); background: var(--panel2); color: var(--fg);
+    padding: 7px 13px; border-radius: 8px; font: inherit; transition: .15s; white-space: nowrap;
+  }
+  .btn:hover { border-color: #3a4a63; background: #202a3a; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .btn.primary:hover { background: #3f7bea; }
+  .btn.danger { border-color: #5c2a2a; color: #ffb3b3; }
+  .btn.ghost { background: transparent; }
+  .row-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .out {
+    margin-top: 10px; background: #0f141d; border: 1px solid var(--line); border-radius: 8px;
+    padding: 9px 11px; font: 12px/1.5 Consolas, "Cascadia Mono", monospace; color: #c8d4e6;
+    max-height: 190px; overflow: auto; white-space: pre-wrap; word-break: break-all;
+  }
+  .out:empty { display: none; }
+  .preview {
+    width: 100%; aspect-ratio: 16/9; background: #07090d; border-radius: 10px; border: 1px solid var(--line);
+    object-fit: contain; display: block;
+  }
+  .kv { display: grid; grid-template-columns: 92px 1fr; gap: 4px 10px; font-size: 12.5px; margin-top: 10px; }
+  .kv div:nth-child(odd) { color: var(--dim); }
+  .kv div:nth-child(even) { word-break: break-all; }
+  .drv { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-top: 10px; background: var(--panel2); }
+  .drv .title { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+  .drv .meta { font-size: 12px; color: var(--dim); margin-top: 4px; }
+  .ok { color: var(--ok); } .bad { color: var(--err); } .warn { color: var(--warn); }
+  #log { max-height: 340px; }
+  .seg { border-left: 2px solid var(--accent); padding: 3px 0 3px 8px; margin: 6px 0; font-size: 12.5px; }
+  .seg time { color: var(--dim); font-size: 11px; margin-right: 6px; }
+  footer { padding: 0 20px 28px; color: var(--dim); font-size: 12px; }
+  a { color: var(--accent); }
+  .hint { font-size: 12px; color: var(--warn); margin-top: 8px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>模拟音视频通话</h1>
+  <span class="tag">v1.0 · 端口 5800 · <a href="/docs" target="_blank">接口文档</a></span>
+  <div class="pills">
+    <span class="pill" id="p-server">服务 <b>—</b></span>
+    <span class="pill" id="p-out">输出 <b>—</b></span>
+    <span class="pill" id="p-video">视频 <b>—</b></span>
+    <span class="pill" id="p-stt">STT <b>—</b></span>
+    <span class="pill" id="p-rpa">RPA <b>—</b></span>
+  </div>
+</header>
+
+<div class="wrap">
+  <div>
+    <!-- ============ 语音：说 ============ -->
+    <div class="card">
+      <h2>① 发声 → 虚拟麦克风 <small>TTS 播进 CABLE Input，对方当成你在说话</small></h2>
+      <textarea id="speak-text">你好呀，我是你的 AI 助手，这条声音是通过虚拟声卡送进麦克风的。</textarea>
+      <div class="grid2" style="margin-top:8px">
+        <label class="row"><span>音色</span><select id="voice"></select></label>
+        <label class="row"><span>引擎</span>
+          <select id="engine">
+            <option value="edge">edge-tts（自然）</option>
+            <option value="sapi">Windows SAPI（离线兜底）</option>
+          </select>
+        </label>
+      </div>
+      <div class="row-btns">
+        <button class="btn primary" id="btn-speak">🔊 说出来</button>
+        <button class="btn" id="btn-tone">🎵 测试音（不联网）</button>
+        <button class="btn danger" id="btn-speak-stop">⏹ 打断</button>
+      </div>
+      <div class="out" id="speak-out"></div>
+    </div>
+
+    <!-- ============ 语音：听 ============ -->
+    <div class="card" style="margin-top:16px">
+      <h2>② 听对方 → 文字 <small>默认抓系统回环（不用改 QQ 输出），也可指定 CABLE Output</small></h2>
+      <div class="grid2">
+        <label class="row"><span>时长(秒)</span><input type="number" id="listen-secs" value="5" min="1" max="120" step="1"></label>
+        <label class="row"><span>输入源</span>
+          <select id="listen-mode">
+            <option value="">用配置值</option>
+            <option value="loopback">系统回环（扬声器）</option>
+            <option value="device">指定录音设备</option>
+          </select>
+        </label>
+      </div>
+      <div class="row-btns">
+        <button class="btn primary" id="btn-listen">🎧 录一段并转写</button>
+        <button class="btn" id="btn-stream-on">⏺ 开始连续监听</button>
+        <button class="btn danger" id="btn-stream-off">⏹ 停止监听</button>
+      </div>
+      <div class="out" id="listen-out"></div>
+      <div id="segments"></div>
+    </div>
+
+    <!-- ============ 事件 ============ -->
+    <div class="card" style="margin-top:16px">
+      <h2>实时事件 <small>SSE 推送：TTS / 转写 / 推流 / 接听</small></h2>
+      <div class="out" id="log"></div>
+    </div>
+  </div>
+
+  <div>
+    <!-- ============ 视频 ============ -->
+    <div class="card">
+      <h2>③ 推流 → 虚拟摄像头 <small>没装驱动也能看到 dry-run 预览</small></h2>
+      <img class="preview" id="preview" alt="虚拟摄像头预览" />
+      <label class="row" style="margin-top:10px"><span>图片</span>
+        <input type="text" id="img-path" placeholder="本地路径 / http URL / 留空用 assets/ 里的人设图">
+      </label>
+      <div class="grid2">
+        <label class="row"><span>动效</span>
+          <select id="effect">
+            <option value="kenburns">Ken Burns 缓慢推拉</option>
+            <option value="pulse">呼吸脉冲</option>
+            <option value="still">静止</option>
+          </select>
+        </label>
+        <label class="row"><span>字幕</span><input type="text" id="caption" placeholder="叠加在画面底部"></label>
+      </div>
+      <label class="row"><span>上传</span><input type="file" id="img-file" accept="image/*"></label>
+      <div class="row-btns">
+        <button class="btn primary" id="btn-stream">▶ 开始推流</button>
+        <button class="btn" id="btn-image">🖼 切换图片</button>
+        <button class="btn danger" id="btn-stream-stop">⏹ 停止</button>
+      </div>
+      <div class="kv" id="video-kv"></div>
+    </div>
+
+    <!-- ============ 驱动 ============ -->
+    <div class="card" style="margin-top:16px">
+      <h2>④ 虚拟驱动 <small>模块零：检测 / 下载 / 静默安装</small></h2>
+      <div class="row-btns" style="margin-top:0">
+        <button class="btn primary" id="btn-drv-check">🔍 检查</button>
+        <button class="btn" id="btn-drv-install">⬇ 下载并安装</button>
+      </div>
+      <div id="drv-list"></div>
+      <div class="hint" id="drv-hint"></div>
+    </div>
+
+    <!-- ============ RPA ============ -->
+    <div class="card" style="margin-top:16px">
+      <h2>⑤ 自动接听 <small>模块三：UIA 盯 QQ/微信 通话弹窗，抓不到按钮就转图像识别</small></h2>
+      <div class="row-btns" style="margin-top:0">
+        <button class="btn primary" id="btn-rpa-start">▶ 开始监听</button>
+        <button class="btn danger" id="btn-rpa-stop">⏹ 停止</button>
+        <button class="btn" id="btn-rpa-scan">🔎 扫描窗口控件</button>
+        <button class="btn" id="btn-rpa-match">🖼 测试图像识别</button>
+        <button class="btn" id="btn-rpa-snap">📸 截图存模板</button>
+        <label class="row" style="margin:0"><input type="checkbox" id="rpa-dry"> <span>演练模式（只记录不点击）</span></label>
+      </div>
+      <div class="kv" id="rpa-kv"></div>
+      <div class="hint" id="rpa-hint" style="display:none"></div>
+      <div class="out" id="rpa-out"></div>
+    </div>
+
+    <!-- ============ 设备 ============ -->
+    <div class="card" style="margin-top:16px">
+      <h2>音频设备 <small>名字匹配，不用记索引</small></h2>
+      <div class="out" id="dev-out"></div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  这个页面只跟本机 5800 端口通信。QQ/微信 里要真正生效，需要：麦克风=CABLE Output、摄像头=OBS Virtual Camera。
+</footer>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const token = localStorage.getItem("av_token") || "";
+const BASE = location.origin;
+
+async function api(path, body, opts = {}) {
+  const headers = { "content-type": "application/json" };
+  if (token) headers["x-av-token"] = token;
+  const res = await fetch(BASE + path, {
+    method: body === undefined ? "GET" : "POST",
+    headers,
+    body: body === undefined ? undefined : JSON.stringify(body || {}),
+    ...opts,
+  });
+  let data = null;
+  const text = await res.text();
+  try { data = text ? JSON.parse(text) : null; } catch (e) { data = { raw: text }; }
+  if (!res.ok) {
+    if (res.status === 401) {
+      const t = prompt("服务设置了访问令牌（server.token），请输入：");
+      if (t) { localStorage.setItem("av_token", t); location.reload(); }
+    }
+    throw new Error((data && (data.error || data.detail)) || res.status + " " + res.statusText);
+  }
+  return data;
+}
+
+function log(html) {
+  const el = $("log");
+  const now = new Date().toLocaleTimeString("zh-CN", { hour12: false });
+  el.innerHTML = `<div class="seg"><time>${now}</time>${html}</div>` + el.innerHTML;
+  while (el.childNodes.length > 120) el.removeChild(el.lastChild);
+}
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+// ---------------------------------------------------------------- 状态
+function pill(id, label, ok, text) {
+  const el = $(id);
+  el.className = "pill " + (ok === null ? "" : ok ? "ok" : "bad");
+  el.innerHTML = `${label} <b>${esc(text)}</b>`;
+}
+
+async function refresh() {
+  try {
+    const s = await api("/api/av/status");
+    pill("p-server", "服务", true, "在线 · " + s.server.port);
+    const out = s.audio.output;
+    pill("p-out", "输出", !!out.virtual_cable,
+      out.virtual_cable ? "虚拟声卡" : "系统扬声器(降级)");
+    const v = s.video;
+    pill("p-video", "视频", v.running ? !v.dry_run : null,
+      v.running ? (v.dry_run ? "dry-run " + v.fps_actual + "fps" : v.resolution + " " + v.fps_actual + "fps") : "未推流");
+    const stt = s.stt;
+    pill("p-stt", "STT", !!stt.model_loaded, stt.model_loaded ? stt.model : (stt.error ? "不可用" : "未加载"));
+    const r = s.rpa || (window.__rpa = null);
+    if (r) pill("p-rpa", "RPA", r.running ? true : null, r.running ? r.state : "未启动");
+    renderVideo(s.video);
+    window.__lastStatus = s;
+  } catch (e) {
+    pill("p-server", "服务", false, "离线");
+  }
+}
+
+function renderVideo(v) {
+  $("video-kv").innerHTML = `
+    <div>状态</div><div>${v.running ? (v.dry_run ? "<span class=warn>dry-run（无虚拟摄像头）</span>" : "<span class=ok>推流中</span>") : "未推流"}</div>
+    <div>后端</div><div>${esc(v.backend)} · 摄像头${v.camera_open ? "已打开" : "未打开"}</div>
+    <div>图源</div><div>${esc(v.image || "—")}</div>
+    <div>帧率</div><div>${v.fps_actual} / ${v.fps_target} fps · 共 ${v.frames} 帧</div>
+    ${v.error ? `<div>错误</div><div class="bad">${esc(v.error)}</div>` : ""}`;
+}
+
+// ---------------------------------------------------------------- 预览轮询
+let previewTimer = null;
+function startPreview() {
+  if (previewTimer) return;
+  previewTimer = setInterval(() => {
+    const img = $("preview");
+    const s = window.__lastStatus && window.__lastStatus.video;
+    if (s && !s.running) { img.style.opacity = .35; return; }
+    img.style.opacity = 1;
+    img.src = BASE + "/api/av/preview.jpg?t=" + Date.now();
+  }, 800);
+}
+
+// ---------------------------------------------------------------- 语音
+async function loadVoices() {
+  try {
+    const d = await api("/api/av/voices?locale=zh");
+    const sel = $("voice");
+    sel.innerHTML = '<option value="">用配置默认</option>' +
+      d.voices.map((v) => `<option value="${esc(v.short_name)}">${esc(v.friendly_name || v.short_name)}</option>`).join("");
+  } catch (e) { /* edge-tts 离线时忽略 */ }
+}
+
+$("btn-speak").onclick = async () => {
+  const text = $("speak-text").value.trim();
+  if (!text) return;
+  const btn = $("btn-speak");
+  btn.disabled = true; btn.textContent = "合成中…";
+  $("speak-out").textContent = "";
+  try {
+    const r = await api("/api/av/speak", {
+      text,
+      voice: $("voice").value || null,
+      engine: $("engine").value,
+    });
+    $("speak-out").textContent =
+      `✔ 已播放 ${r.audio_seconds}s（${r.engine}/${r.voice}）\n` +
+      `  合成 ${r.synth_ms}ms  总计 ${r.total_ms}ms  缓存=${r.cached}\n` +
+      `  输出设备: ${r.played.device}\n  进虚拟声卡: ${r.played.virtual_cable ? "是（对方能听到）" : "否（只在本机响了）"}\n` +
+      (r.file ? `  文件: ${r.file}` : "");
+  } catch (e) {
+    $("speak-out").textContent = "✘ " + e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = "🔊 说出来";
+  }
+};
+
+$("btn-tone").onclick = async () => {
+  try {
+    const r = await api("/api/av/test_tone", { freq: 660, seconds: 1.5 });
+    $("speak-out").textContent = `✔ 测试音已送 ${r.played.device}`;
+  } catch (e) { $("speak-out").textContent = "✘ " + e.message; }
+};
+
+$("btn-speak-stop").onclick = () => api("/api/av/speak/stop", {}).catch(() => {});
+
+$("btn-listen").onclick = async () => {
+  const btn = $("btn-listen");
+  btn.disabled = true; btn.textContent = "录音中…";
+  $("listen-out").textContent = "录音 + 转写中，请说话（首次会下载 whisper 模型，需等）…";
+  try {
+    const r = await api("/api/av/listen", {
+      seconds: Number($("listen-secs").value || 5),
+      mode: $("listen-mode").value || null,
+    });
+    if (!r.ok) {
+      // v1.6.4（QA P1-2）：录音失败不能只说“失败”，要告诉用户到底哪一步卡了
+      const _parts = [];
+      if (r.error) _parts.push("原因：" + r.error);
+      if (r.note) _parts.push("详情：" + r.note);
+      if (r.hint) _parts.push("怎么办：" + r.hint);
+      $("listen-out").textContent = "✘录音/转写失败\n" + (_parts.join("\n") || "（后端没给原因）");
+    } else {
+      $("listen-out").textContent =
+        `✔ ${r.audio_seconds}s 音频，rms=${r.rms}${r.silent ? "（判定为静音）" : ""}\n` +
+        `  转写: ${r.text || "（空）"}\n  耗时 ${r.elapsed_ms}ms  rtf=${r.rtf}`;
+      // v1.6.4：录到全0 /设备切换过这类情况也要让用户看见
+      if (r.note) $("listen-out").textContent += "\n⚠ " + r.note;
+      addSegments(r.segments || []);
+    }
+  } catch (e) { $("listen-out").textContent = "✘ " + e.message; }
+  finally { btn.disabled = false; btn.textContent = "🎧 录一段并转写"; }
+};
+
+$("btn-stream-on").onclick = async () => {
+  try {
+    const r = await api("/api/av/listen/start", {});
+    $("listen-out").textContent = "✔ 连续监听已启动（说话会自动出字幕）";
+  } catch (e) { $("listen-out").textContent = "✘ " + e.message; }
+};
+$("btn-stream-off").onclick = async () => {
+  await api("/api/av/listen/stop", {}).catch(() => {});
+  $("listen-out").textContent = "已停止连续监听";
+};
+
+function addSegments(segs) {
+  const box = $("segments");
+  segs.forEach((s) => {
+    const t = (s.start ?? 0).toFixed(1);
+    box.innerHTML = `<div class="seg"><time>${t}s</time>${esc(s.text)}</div>` + box.innerHTML;
+  });
+}
+
+// ---------------------------------------------------------------- 视频
+let imgPayload = null;
+$("img-file").onchange = (ev) => {
+  const f = ev.target.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    imgPayload = reader.result;
+    $("img-path").value = "";
+    $("preview").src = imgPayload;
+    log("已载入本地图片：" + f.name);
+  };
+  reader.readAsDataURL(f);
+};
+
+function imageBody() {
+  const p = $("img-path").value.trim();
+  if (imgPayload) return { base64: imgPayload.split(",")[1] || imgPayload };
+  if (p) return { path: p };
+  return {};
+}
+
+$("btn-stream").onclick = async () => {
+  try {
+    const r = await api("/api/av/stream/start", { ...imageBody(), effect: $("effect").value });
+    log("推流已启动：" + (r.video.dry_run ? "dry-run（未装虚拟摄像头）" : r.video.backend));
+    await refresh();
+  } catch (e) { log("✘ 推流失败：" + e.message); }
+};
+
+$("btn-image").onclick = async () => {
+  try {
+    const body = { ...imageBody(), effect: $("effect").value, caption: $("caption").value };
+    if (!body.path && !body.base64) return log("请先填路径、上传图片，或留空使用 assets/ 默认图");
+    const r = await api("/api/av/stream_image", body);
+    log("图片已切换：" + (r.video.image || "ok"));
+    await refresh();
+  } catch (e) { log("✘ 切换失败：" + e.message); }
+};
+
+$("btn-stream-stop").onclick = async () => {
+  await api("/api/av/stream/stop", {}).catch(() => {});
+  await refresh();
+};
+
+$("caption").oninput = () => {
+  api("/api/av/stream/caption", { text: $("caption").value }).catch(() => {});
+};
+
+// ---------------------------------------------------------------- 驱动
+function renderDrivers(d) {
+  const box = $("drv-list");
+  box.innerHTML = Object.entries(d.drivers).map(([k, v]) => `
+    <div class="drv">
+      <div class="title">
+        <span class="${v.installed ? "ok" : "bad"}">${v.installed ? "✔" : "✘"}</span>
+        <span>${esc(v.name)}</span>
+        <span class="pill">${esc(k)}</span>
+        <span class="pill">${v.installer_present ? "安装包已就绪" : "缺安装包"}</span>
+      </div>
+      <div class="meta">${v.evidence && v.evidence.length ? esc(v.evidence.slice(0, 3).join(" · ")) : "未检测到设备"}</div>
+      ${v.error ? `<div class="meta bad">${esc(v.error)}</div>` : ""}
+    </div>`).join("");
+  $("drv-hint").textContent = d.admin ? "" : "当前非管理员：安装时会弹 UAC，请点『是』";
+}
+
+$("btn-drv-check").onclick = async () => {
+  try {
+    const d = await api("/api/av/drivers/check", {});
+    renderDrivers(d);
+    const av = d.security_software || [];
+    $("drv-hint").textContent = (d.admin ? "" : "当前非管理员：安装时会弹 UAC。") +
+      (av.length ? " 注意安全软件：" + av.join(", ") + " —— 被拦时选『允许本次操作』。" : "");
+  } catch (e) { $("drv-hint").textContent = "✘ " + e.message; }
+};
+
+$("btn-drv-install").onclick = async () => {
+  $("drv-hint").textContent = "开始安装（可能需要 UAC，请留意屏幕）…";
+  try {
+    const r = await api("/api/av/drivers/install", {});
+    const lines = Object.entries(r.results).map(([k, v]) => `${k}: ${v.action}${v.error ? " — " + v.error : ""}`);
+    $("drv-hint").textContent = lines.join(" | ");
+    $("btn-drv-check").click();
+  } catch (e) {
+    $("drv-hint").innerHTML = "✘ " + esc(e.message) +
+      "<br>远程安装默认关闭：在项目目录执行 <code>python install_drivers.py --install --yes</code>";
+  }
+};
+
+// ---------------------------------------------------------------- RPA
+const RPA_MODE_TEXT = {
+  none: "未工作", uia: "UIA 控件", image: "图像识别",
+  "image-missing": "图像依赖缺失", "image-no-template": "缺模板图",
+};
+
+function renderRpa(r) {
+  const img = r.image || {};
+  const tpl = img.templates || {};
+  $("p-rpa").className = "pill " + (r.running ? "ok" : "");
+  $("p-rpa").innerHTML = `RPA <b>${r.running ? (RPA_MODE_TEXT[r.mode] || r.state) : (r.available ? "未启动" : "缺依赖")}</b>`;
+  $("rpa-kv").innerHTML = `
+    <div>可用</div><div>${r.available ? "是" : "否 — " + esc(r.hint || "")}</div>
+    <div>状态</div><div>${esc(r.state)} · ${esc(RPA_MODE_TEXT[r.mode] || r.mode)} · 轮询 ${r.polls} · 点击 ${r.clicks}（图像 ${r.image_clicks || 0}）${r.dry_run ? " · 演练" : ""}</div>
+    <div>图像兜底</div><div>${img.available ? "可用" : "不可用 — " + esc(img.error || "")} · 阈值 ${img.threshold} · 自动挂断 ${img.auto_hangup ? "开" : "关"}</div>
+    <div>模板</div><div>接听 ${(tpl.accept || []).length}张 /挂断 ${(tpl.hangup || []).length}张 ${tpl.ready ? "" : (tpl.color_fallback ? " — <span class=\"warn\">没有模板图，走颜色兜底（绿圆=接听 /红圆=挂断）</span>" : " — <span class=\"bad\">未就绪，见 rpa/templates/README.md</span>")}</div>
+    <div>窗口词</div><div>${esc((r.window_keywords || []).join(" / "))}</div>
+    <div>接听词</div><div>${esc((r.accept_labels || []).join(" / "))}</div>
+    <div>挂断词</div><div>${esc((r.hangup_labels || []).join(" / "))}</div>
+    ${r.error ? `<div>错误</div><div class="bad">${esc(r.error)}</div>` : ""}`;
+  const hint = $("rpa-hint");
+  if (r.mode === "image-no-template") {
+    hint.style.display = "";
+    hint.innerHTML = "UIA 取不到按钮 → 已切图像识别，但还没有按钮模板图。" +
+      "点 <b>📸 截图存模板</b> 拿到 rpa/templates/_snapshot.png，用 <code>python tools\\capture_template.py --crop accept --region 左,上,宽,高</code> 裁出来。";
+  } else if (r.mode === "image-missing") {
+    hint.style.display = "";
+    hint.textContent = "图像兜底依赖缺失：" + (img.error || "") + " 执行 pip install pyautogui opencv-python";
+  } else if (img.last_match) {
+    hint.style.display = "";
+    hint.textContent = `最近一次图像命中：${img.last_match.action} score=${img.last_match.score} @(${img.last_match.x},${img.last_match.y}) 窗口=${img.last_match.window}`;
+  } else {
+    hint.style.display = "none";
+  }
+  if (r.log && r.log.length) {
+    $("rpa-out").textContent = r.log.slice(-8).map((e) =>
+      `${new Date(e.ts * 1000).toLocaleTimeString("zh-CN", { hour12: false })} ${e.action} ${e.state} ${e.mode || ""} ${e.clicked ? "[已点]" : ""} ${e.window} :: ${e.control} ${e.error || ""}`).join("\n");
+  }
+}
+
+async function pollRpa() {
+  try {
+    const r = await api("/api/av/rpa/status");
+    renderRpa(r.rpa);
+    $("rpa-dry").checked = !!r.rpa.dry_run;
+  } catch (e) { /* ignore */ }
+}
+
+$("btn-rpa-start").onclick = async () => {
+  try {
+    await api("/api/av/rpa/start", { dry_run: $("rpa-dry").checked });
+    log("RPA 已启动");
+    pollRpa();
+  } catch (e) {
+    $("rpa-out").textContent = "✘ " + e.message +
+      "\n提示：pip install uiautomation comtypes";
+  }
+};
+$("btn-rpa-stop").onclick = async () => { await api("/api/av/rpa/stop", {}).catch(() => {}); pollRpa(); };
+$("btn-rpa-scan").onclick = async () => {
+  $("rpa-out").textContent = "扫描中…";
+  try {
+    const r = await api("/api/av/rpa/scan?depth=5&limit=30");
+    const lines = [];
+    (r.windows || []).forEach((w) => {
+      lines.push(`[窗口] ${w.name}  (${w.class}) ${w.rect ? JSON.stringify(w.rect) : ""}`);
+      (w.controls || []).slice(0, 14).forEach((c) => lines.push(`    · ${c.type}: ${c.name || c.automation_id}`));
+    });
+    if (r.matched_labels) {
+      lines.push("", "命中接听词: " + (r.matched_labels.accept.join(" | ") || "无"));
+      lines.push("命中挂断词: " + (r.matched_labels.hangup.join(" | ") || "无"));
+    }
+    if (r.image) {
+      const t = r.image.templates || {};
+      lines.push("", `图像兜底: ${r.image.available ? "可用" : "不可用 " + (r.image.error || "")}`,
+        `模板: 接听 ${(t.accept || []).length} 张 / 挂断 ${(t.hangup || []).length} 张 ${t.ready ? "（就绪）" : "（未就绪）"}`);
+    }
+    $("rpa-out").textContent = lines.join("\n") || "没有扫描到窗口（先把 QQ/微信 打开）";
+  } catch (e) { $("rpa-out").textContent = "✘ " + e.message; }
+};
+$("btn-rpa-match").onclick = async () => {
+  $("rpa-out").textContent = "图像匹配中（只匹配，不点击）…";
+  try {
+    const r = await api("/api/av/rpa/test_match", {});
+    if (!r.ok) { $("rpa-out").textContent = "✘ " + (r.error || "失败"); return; }
+    const lines = [`阈值 ${r.threshold} · 命中 ${r.hits.length} 处`];
+    r.hits.forEach((h) => lines.push(`  ${h.action} score=${h.score} 点击(${h.x},${h.y}) 窗口=${h.window} 模板=${h.template}`));
+    if (!r.hits.length) lines.push("没命中：降低 rpa.match_threshold 到 0.7，或重新截模板");
+    $("rpa-out").textContent = lines.join("\n");
+  } catch (e) { $("rpa-out").textContent = "✘ " + e.message; }
+};
+$("btn-rpa-snap").onclick = async () => {
+  $("rpa-out").textContent = "截图中…";
+  try {
+    const r = await api("/api/av/rpa/snapshot", {});
+    $("rpa-out").textContent = r.ok
+      ? `已保存：${r.file}\n窗口：${r.window || "(整屏)"}\n${r.next || ""}`
+      : "✘ " + (r.error || "截图失败");
+  } catch (e) { $("rpa-out").textContent = "✘ " + e.message; }
+};
+$("rpa-dry").onchange = () => api("/api/av/rpa/start", { dry_run: $("rpa-dry").checked }).catch(() => {});
+
+// ---------------------------------------------------------------- 设备
+async function loadDevices() {
+  try {
+    const d = await api("/api/av/devices");
+    const vc = d.virtual_cable || {};
+    const lines = [];
+    lines.push(`虚拟声卡: 播放端 ${vc.playback_found ? "✔ " + vc.playback_found.join(" | ") : "✘ 无"}`);
+    lines.push(`          录音端 ${vc.recording_found ? "✔ " + vc.recording_found.join(" | ") : "✘ 无"}`);
+    lines.push(`回环源: ${(d.loopback_sources || []).map((s) => s.name).join(" | ") || "无"}`);
+    lines.push("", "输出设备:");
+    (d.output || []).forEach((x) => lines.push(`  [${x.index}] ${x.name}  ${x.hostapi || ""}`));
+    lines.push("", "输入设备:");
+    (d.input || []).forEach((x) => lines.push(`  [${x.index}] ${x.name}  ${x.hostapi || ""}`));
+    if (d.error) lines.push("", "错误: " + d.error);
+    $("dev-out").textContent = lines.join("\n");
+  } catch (e) { $("dev-out").textContent = "✘ " + e.message; }
+}
+
+// ---------------------------------------------------------------- SSE
+function connectSSE() {
+  const es = new EventSource(BASE + "/api/av/events/stream" + (token ? "?token=" + encodeURIComponent(token) : ""));
+  es.onmessage = (ev) => {
+    let d;
+    try { d = JSON.parse(ev.data); } catch (e) { return; }
+    const kind = d.kind || "";
+    if (kind === "audio" && (d.action === "speak_done" || d.action === "tts" || d.action === "warn")) {
+      log(`🔊 ${d.action} ${d.seconds ? d.seconds + "s " : ""}${d.message || d.text || ""}`);
+    } else if (kind === "transcript") {
+      addSegments([{ start: d.start, text: d.text }]);
+      log(`📝 ${esc(d.text)}`);
+    } else if (kind === "video") {
+      log(`🎥 ${d.action}${d.error ? " — " + esc(d.error) : ""}`);
+      refresh();
+    } else if (kind === "rpa") {
+      log(`🖱 ${d.action} ${d.state || ""} ${d.window || ""} ${d.control || ""}`);
+      pollRpa();
+    } else if (kind === "server" || kind === "config") {
+      log(`⚙ ${kind}/${d.action || ""}`);
+    }
+  };
+  es.onerror = () => { /* 浏览器会自动重连 */ };
+}
+
+// ---------------------------------------------------------------- 启动
+(async function boot() {
+  await refresh();
+  startPreview();
+  loadVoices();
+  loadDevices();
+  pollRpa();
+  connectSSE();
+  setInterval(refresh, 3000);
+  setInterval(pollRpa, 3000);
+})();
+</script>
+</body>
+</html>

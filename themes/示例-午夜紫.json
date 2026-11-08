@@ -1,0 +1,18 @@
+{
+  "name": "午夜紫",
+  "dark": true,
+  "vars": {
+    "bg": "#0f0a1a",
+    "panel": "#171029",
+    "panel2": "#1f1638",
+    "line": "#312350",
+    "text": "#ece7f8",
+    "muted": "#a394c9",
+    "accent": "#a78bfa",
+    "accent2": "#c4b5fd",
+    "ok": "#34d399",
+    "warn": "#fbbf24",
+    "err": "#f87171",
+    "radius": "14px"
+  }
+}

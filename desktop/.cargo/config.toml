@@ -1,0 +1,14 @@
+# 国内网络用 rsproxy 镜像拉 crates（crates.io 在本机 DNS 解析失败）
+# 想换回官方源，删掉这个文件即可。
+[source.crates-io]
+replace-with = "rsproxy-sparse"
+
+[source.rsproxy-sparse]
+registry = "sparse+https://rsproxy.cn/index/"
+
+[registries.rsproxy]
+index = "sparse+https://rsproxy.cn/index/"
+
+[net]
+git-fetch-with-cli = true
+retry = 5

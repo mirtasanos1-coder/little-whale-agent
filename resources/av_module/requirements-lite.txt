@@ -1,0 +1,27 @@
+# ============================================================
+# 模拟音视频通话模块 · 精简依赖（不含语音识别）
+# ============================================================
+# 适合：先跑通“发声 / 推流 / 驱动安装 / RPA 接听”，
+#       听写（faster-whisper）确认需要时再单独装。
+#   pip install -r requirements-lite.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+#   pip install faster-whisper -i https://pypi.tuna.tsinghua.edu.cn/simple   # 后补
+#
+# 合计约 125 MB（比全量省 ~180 MB；opencv-python 占 ~45 MB，
+# 不想用图像兜底就删掉最后两行并把 rpa.image_fallback 设为 false）。
+# 没装 faster-whisper 时服务照常启动，/api/av/listen 会返回安装指引。
+
+fastapi>=0.115,<1.0
+uvicorn>=0.30,<1.0
+pydantic>=2.5,<3.0
+numpy>=1.26
+sounddevice>=0.4.6
+soundcard>=0.4.4
+miniaudio>=1.59
+edge-tts>=7.0.0
+pillow>=10.0
+pyvirtualcam>=0.10
+uiautomation>=2.0.20
+comtypes>=1.2.0
+opencv-python>=4.8
+pyautogui>=0.9.54
+requests>=2.31

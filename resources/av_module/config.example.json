@@ -1,0 +1,114 @@
+{
+  "server": {
+    "host": "127.0.0.1",
+    "port": 5800,
+    "token": "",
+    "log_level": "info"
+  },
+  "audio": {
+    "output_device": "CABLE Input",
+    "fallback_output_device": "",
+    "out_sample_rate": 48000,
+    "out_channels": 2,
+    "out_gain": 1.0,
+    "input_mode": "loopback",
+    "input_device": "CABLE Output",
+    "loopback_device": "",
+    "in_sample_rate": 48000,
+    "in_channels": 2,
+    "frame_ms": 20,
+    "max_listen_seconds": 120,
+    "silence_rms": 0.001,
+    "silence_hang_ms": 250
+  },
+  "tts": {
+    "engine": "edge",
+    "voice": "zh-CN-XiaoxiaoNeural",
+    "rate": "+0%",
+    "volume": "+0%",
+    "pitch": "+0Hz",
+    "timeout": 20.0,
+    "interrupt": true
+  },
+  "stt": {
+    "engine": "faster-whisper",
+    "model": "small",
+    "device": "cpu",
+    "compute_type": "int8",
+    "language": "zh",
+    "beam_size": 1,
+    "vad_filter": true,
+    "download_root": "",
+    "hf_endpoint": "https://hf-mirror.com",
+    "stream_window_s": 4.0
+  },
+  "video": {
+    "width": 1280,
+    "height": 720,
+    "fps": 24,
+    "backend": "obs",
+    "device": 0,
+    "effect": "kenburns",
+    "zoom": 1.06,
+    "background": "#101018"
+  },
+  "rpa": {
+    "enabled": true,
+    "dry_run": true,
+    "poll_interval": 0.8,
+    "window_keywords": [
+      "QQ",
+      "微信",
+      "WeChat",
+      "通话",
+      "Call",
+      "Voice",
+      "Video"
+    ],
+    "accept_labels": [
+      "接听",
+      "接听电话",
+      "接听通话",
+      "接受",
+      "Accept",
+      "Answer",
+      "Accept call"
+    ],
+    "hangup_labels": [
+      "挂断",
+      "挂断电话",
+      "结束通话",
+      "拒绝",
+      "Hang up",
+      "Hangup",
+      "End call",
+      "Decline"
+    ],
+    "log_size": 200,
+    "image_fallback": true,
+    "template_dir": "rpa/templates",
+    "match_threshold": 0.8,
+    "match_scales": [
+      1.0,
+      0.85,
+      1.15
+    ],
+    "auto_hangup": false,
+    "hangup_grace_s": 15.0,
+    "accept_cooldown_s": 5.0,
+    "hangup_cooldown_s": 8.0
+  },
+  "drivers": {
+    "allow_remote_install": false,
+    "vbcable_installer": "VBCABLE_Setup_x64.exe",
+    "vbcable_args": [
+      "-i",
+      "-h"
+    ],
+    "virtualcam_installer": "obs-virtualcam-2.0.5-Windows-installer.exe",
+    "virtualcam_args": [
+      "/S"
+    ],
+    "install_timeout": 300
+  }
+}
