@@ -1,0 +1,47 @@
+# ============================================================
+# 模拟音视频通话模块 · 全量依赖（含语音识别）
+# ============================================================
+# 安装（国内建议走清华镜像）:
+#   pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+#
+# 体积参考（Windows / Python 3.11）:
+#   fastapi+uvicorn+pydantic+requests  ≈ 25 MB
+#   numpy+pydantic 二进制               ≈ 30 MB
+#   sounddevice+soundcard+miniaudio     ≈ 3 MB
+#   pillow                              ≈ 12 MB
+#   pyvirtualcam                        ≈ 1 MB
+#   uiautomation+comtypes               ≈ 4 MB
+#   pyautogui+opencv-python             ≈ 45 MB   ← 图像兜底（opencv 是大头）
+#   edge-tts                            ≈ 8 MB
+#   faster-whisper + ctranslate2 + tokenizers + onnxruntime ≈ 180 MB   ← 大头
+# 合计 ≈ 305 MB（不含模型权重）
+# 想省空间：改用 requirements-lite.txt，听写功能之后单独装；
+# 完全不用图像兜底的话，opencv-python + pyautogui 也可以不装（rpa.image_fallback 设为 false）。
+
+# ---- Web 微服务 ----
+fastapi>=0.115,<1.0
+uvicorn>=0.30,<1.0
+pydantic>=2.5,<3.0
+
+# ---- 音频（模块一）----
+numpy>=1.26
+sounddevice>=0.4.6       # PortAudio 绑定，播放/录音
+soundcard>=0.4.4         # WASAPI 回环录音（抓“对方的声音”）
+miniaudio>=1.59          # 其它格式解码（mp3/flac），edge-tts 输出兜底
+edge-tts>=7.0.0          # TTS（微软在线音色）
+
+# ---- 语音识别（模块一，可后装）----
+faster-whisper>=1.0.3
+
+# ---- 视频（模块二）----
+pillow>=10.0
+pyvirtualcam>=0.10       # 需要系统已装 OBS Virtual Camera
+
+# ---- RPA（模块三）----
+uiautomation>=2.0.20
+comtypes>=1.2.0
+opencv-python>=4.8       # 模板匹配（图像兜底）；不需要兜底可不装
+pyautogui>=0.9.54        # 点击/截图（图像兜底）
+
+# ---- 杂项 ----
+requests>=2.31           # 驱动/图片下载

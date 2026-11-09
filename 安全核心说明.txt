@@ -1,0 +1,19 @@
+安全核心说明
+================
+
+小鲸鱼的安全核心不在源码包里。它被编译成 secure_core.pyc 随程序发布，
+目的是防止有人改一个字节就把「本机密钥加密盐」和「文件清单签名密钥」换掉 ——
+那会让老用户已保存的 API Key 全部失效、已发出的程序包签名全部对不上。
+
+如果你要二次开发，照着这四个接口自己重写一份 secure_core.py 即可，
+接口保持一致，程序就能跑：
+
+    secret_salt()          -> bytes  本机加密盐（API Key / 暗号）
+    manifest_key()         -> bytes  文件清单签名密钥
+    codeword_digest(text)  -> str    暗号指纹（不可逆，只用于比较）
+    version_tag()          -> str    诊断信息用的一小段标识
+
+拿到源码包后怎么跑：
+    1) pip install -r 依赖（见 Docs/开发者指南.md 或 README 的「从源码运行」）
+    2) python backend_server.py             # 只起后端 + 浏览器打开
+    3) cd desktop && npm install && npm run tauri dev   # 起带界面的桌面端

@@ -1,0 +1,68 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "小鲸鱼",
+  "mainBinaryName": "小鲸鱼",
+  "version": "2.0.2",
+  "identifier": "com.xiaojingyu.agent",
+  "build": {
+    "frontendDist": "../src"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "main",
+        "title": "小鲸鱼 Agent 控制台",
+        "width": 1180,
+        "height": 820,
+        "minWidth": 960,
+        "minHeight": 640,
+        "resizable": true,
+        "center": true,
+        "theme": "Dark",
+        "decorations": false,
+        "visible": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis"
+    ],
+    "publisher": "Ruao",
+    "copyright": "© 2026 Ruao · 小鲸鱼 Agent",
+    "shortDescription": "小鲸鱼 Agent 控制台（QQ 智能陪聊）",
+    "longDescription": "小鲸鱼 QQ Agent：本地/云端模型聊天、记忆与日记、说说与动态、语音、插件。界面为 Tauri 桌面端，后端为本地无头服务（127.0.0.1），数据全部留在本机。",
+    "resources": [
+      "resources/backend_server.exe",
+      "resources/napcat_bundle.zip",
+      "resources/av_module",
+      "resources/manifest.sha256",
+      "resources/manifest.sig"
+    ],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "languages": [
+          "SimpChinese",
+          "English"
+        ],
+        "displayLanguageSelector": false,
+        "installerIcon": "icons/icon.ico",
+        "compression": "lzma",
+        "installerHooks": "installer-hooks.nsh"
+      }
+    }
+  }
+}

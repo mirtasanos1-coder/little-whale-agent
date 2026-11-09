@@ -1,0 +1,450 @@
+/* ============================================================================
+   小鲸鱼 · 统一交互组件样式（V1.7.0）
+   ----------------------------------------------------------------------------
+   只允许使用 index.html :root 里已有的主题变量，不得硬编码颜色：
+     --bg --panel --panel2 --line --text --muted --accent --accent2
+     --ok --warn --err --radius
+   亮色主题由 html[data-theme-dark="0"] 负责，这里只做必要微调。
+   前缀统一 xjui-，避免和页面既有类名打架。
+   ========================================================================== */
+
+/* ---------- 层级（集中定义，禁止各处散写 z-index） ---------- */
+:root {
+  --xjui-z-toast: 100000;
+  --xjui-z-sign: 99999;
+  --xjui-z-confirm: 99990;
+}
+
+/* ---------- 焦点可见（A11y） ---------- */
+.xjui-root :focus-visible,
+.xjui-toast :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ============================================================================
+   一、Toast（轻量提示，不阻断）
+   ========================================================================== */
+.xjui-toast-stack {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: var(--xjui-z-toast);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  max-width: min(560px, 86vw);
+}
+
+.xjui-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--panel2);
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.55;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .38);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity .18s ease, transform .18s ease;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.xjui-toast.xjui-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+.xjui-toast.xjui-out {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* 四种语义色：只改边框/底色/图标色，正文仍用 --text 保证对比度 */
+.xjui-toast-success { border-color: color-mix(in srgb, var(--ok) 45%, transparent); background: color-mix(in srgb, var(--ok) 14%, var(--panel2)); }
+.xjui-toast-error   { border-color: color-mix(in srgb, var(--err) 50%, transparent); background: color-mix(in srgb, var(--err) 14%, var(--panel2)); }
+.xjui-toast-warning { border-color: color-mix(in srgb, var(--warn) 50%, transparent); background: color-mix(in srgb, var(--warn) 14%, var(--panel2)); }
+.xjui-toast-info    { border-color: color-mix(in srgb, var(--accent) 45%, transparent); background: color-mix(in srgb, var(--accent) 12%, var(--panel2)); }
+
+.xjui-toast-icon {
+  flex: none;
+  font-size: 12px;
+  line-height: 1.55;
+}
+.xjui-toast-success .xjui-toast-icon { color: var(--ok); }
+.xjui-toast-error   .xjui-toast-icon { color: var(--err); }
+.xjui-toast-warning .xjui-toast-icon { color: var(--warn); }
+.xjui-toast-info    .xjui-toast-icon { color: var(--accent); }
+
+.xjui-toast-main { flex: 1 1 auto; min-width: 0; }
+.xjui-toast-msg { display: block; }
+
+/* 重复触发计数：同一句话第 2 次起显示 ×N，并短暂高亮 */
+.xjui-toast-count {
+  flex: none;
+  align-self: center;
+  font-size: 10.5px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+.xjui-toast-pulse {
+  animation: xjuiPulse .32s ease;
+}
+@keyframes xjuiPulse {
+  0%   { transform: translateY(0) scale(1); }
+  45%  { transform: translateY(0) scale(1.015); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+.xjui-toast-acts {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.xjui-toast-btn {
+  font-size: 11px;
+  padding: 2px 9px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.xjui-toast-btn:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+.xjui-toast-btn.xjui-primary {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+}
+.xjui-toast-btn.xjui-danger {
+  border-color: color-mix(in srgb, var(--err) 45%, transparent);
+  background: color-mix(in srgb, var(--err) 16%, transparent);
+  color: var(--err);
+}
+.xjui-toast-x {
+  flex: none;
+  align-self: flex-start;
+  width: 18px;
+  height: 18px;
+  line-height: 16px;
+  text-align: center;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+.xjui-toast-x:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+}
+
+/* 剩余时间条：一眼看出还有多久消失 */
+.xjui-toast-bar {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 100%;
+  transform-origin: left center;
+  background: color-mix(in srgb, var(--accent) 55%, transparent);
+  border-radius: 0 0 10px 10px;
+}
+.xjui-toast { position: relative; overflow: hidden; }
+.xjui-toast-success .xjui-toast-bar { background: color-mix(in srgb, var(--ok) 55%, transparent); }
+.xjui-toast-error   .xjui-toast-bar { background: color-mix(in srgb, var(--err) 55%, transparent); }
+.xjui-toast-warning .xjui-toast-bar { background: color-mix(in srgb, var(--warn) 55%, transparent); }
+
+/* ============================================================================
+   二、模态底座（Confirm / Prompt / Sign 共用）
+   ========================================================================== */
+.xjui-mask {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+  background: rgba(3, 8, 18, .66);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+.xjui-mask.xjui-open { display: flex; }
+.xjui-mask.xjui-z-confirm { z-index: var(--xjui-z-confirm); }
+.xjui-mask.xjui-z-sign { z-index: var(--xjui-z-sign); }
+
+html[data-theme-dark="0"] .xjui-mask { background: rgba(15, 23, 42, .46); }
+
+.xjui-card {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 480px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius, 12px);
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, .5);
+  overflow: hidden;
+  animation: xjuiCardIn .18s ease;
+}
+.xjui-card.xjui-wide { max-width: 640px; }
+@keyframes xjuiCardIn {
+  from { opacity: 0; transform: translateY(8px) scale(.99); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.xjui-head {
+  flex: none;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+}
+.xjui-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.xjui-title-icon { flex: none; font-size: 14px; line-height: 1.5; }
+.xjui-title-icon.xjui-t-danger { color: var(--err); }
+.xjui-title-icon.xjui-t-warn { color: var(--warn); }
+.xjui-title-icon.xjui-t-info { color: var(--accent); }
+
+.xjui-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 14px 18px;
+}
+.xjui-text {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* 风险后果块：规范要求「必须写明风险后果」，这一块永远带标题 */
+.xjui-risk {
+  margin-top: 10px;
+  padding: 9px 11px;
+  border-radius: 9px;
+  border: 1px solid color-mix(in srgb, var(--err) 42%, transparent);
+  background: color-mix(in srgb, var(--err) 11%, transparent);
+}
+.xjui-risk-cap {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  color: var(--err);
+  margin-bottom: 3px;
+}
+.xjui-risk-text {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.xjui-note {
+  margin-top: 8px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--muted);
+  white-space: pre-wrap;
+}
+
+.xjui-foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+
+/* 弹窗按钮：比 .btn-s 更大一点，避免误点 */
+.xjui-btn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel2);
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: border-color .15s, background .15s, color .15s;
+}
+.xjui-btn:hover { border-color: var(--accent); }
+.xjui-btn.xjui-primary {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+}
+.xjui-btn.xjui-primary:hover { background: color-mix(in srgb, var(--accent) 26%, transparent); }
+/* 危险操作：实心红（等价于 bg-red-600），保证一眼看出不可逆 */
+.xjui-btn.xjui-danger {
+  border-color: #dc2626;
+  background: #dc2626;
+  color: #fff;
+}
+.xjui-btn.xjui-danger:hover { background: #b91c1c; border-color: #b91c1c; }
+.xjui-btn[aria-disabled="true"] {
+  opacity: .45;
+  filter: grayscale(.45);
+  cursor: not-allowed;
+}
+.xjui-btn[aria-disabled="true"]:hover {
+  border-color: var(--line);
+  background: var(--panel2);
+  color: var(--text);
+}
+.xjui-btn[aria-disabled="true"].xjui-danger:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #fff;
+}
+
+.xjui-shake { animation: xjuiShake .3s ease-in-out; }
+@keyframes xjuiShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  50% { transform: translateX(4px); }
+  75% { transform: translateX(-2px); }
+}
+
+/* ============================================================================
+   三、签署弹窗（强模态）
+   ========================================================================== */
+.xjui-sign-scroll {
+  max-height: 46vh;
+  overflow: auto;
+  padding: 10px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: var(--panel2);
+}
+.xjui-sign-scroll.xjui-expanded { max-height: 62vh; }
+.xjui-sign-text {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text);
+}
+.xjui-sign-more {
+  margin-top: 8px;
+  display: flex;
+  justify-content: center;
+}
+.xjui-linkbtn {
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-size: 11.5px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.xjui-linkbtn:hover { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+
+.xjui-sign-gate {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+}
+.xjui-sign-gate input[type="checkbox"] {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin: 2px 0 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.xjui-sign-sign {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.xjui-sign-sign label {
+  flex: none;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.xjui-input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel2);
+  color: var(--text);
+  font-size: 12.5px;
+  outline: none;
+}
+.xjui-input:focus { border-color: var(--accent); }
+
+.xjui-sign-hint {
+  margin-top: 8px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--warn);
+  min-height: 15px;
+}
+.xjui-sign-hint.xjui-hint-err { color: var(--err); }
+
+/* ============================================================================
+   四、低性能 / 减少动效
+   ========================================================================== */
+html[data-perf="low"] .xjui-toast,
+html[data-perf="low"] .xjui-card {
+  transition: none;
+  animation: none;
+}
+html[data-perf="low"] .xjui-mask { backdrop-filter: none; -webkit-backdrop-filter: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .xjui-toast,
+  .xjui-card,
+  .xjui-shake,
+  .xjui-toast-pulse { animation: none; transition: none; }
+}

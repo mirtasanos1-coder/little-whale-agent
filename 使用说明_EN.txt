@@ -1,0 +1,32 @@
+小鲸鱼 Agent 控制台 · Quick Start (English)
+=================================================
+
+1. Run
+   - Double-click 小鲸鱼.exe  (or 启动.bat)
+   - The console window opens; nothing is uploaded anywhere.
+
+2. First run, in this order
+   a) Read the disclaimer and click 我同意 (agree). Shown only once.
+   b) 模型设置 (Model) -> pick your local LM Studio / Ollama, or paste a cloud API key.
+      Click 保存并应用 (Save & apply): the model becomes #1 in the priority list.
+   c) 设置 -> QQ接入 : install / start NapCat, then log in with your bot account.
+   d) Click 检测启动顺序 (Startup check) -> all four steps should turn green.
+
+3. Common paths
+   - Data dir: 设置 -> 关于 -> 程序目录 / 数据目录
+   - Logs: agent.log next to the exe
+   - Memory backups: memory/ (exports, backups)
+
+4. Notes
+   - Local models do NOT need an API key. Cloud models need your own key.
+   - Image generation (画图) needs a cloud image endpoint (OpenAI compatible).
+     The 程序生图 button works with any text model: it asks the model to write
+     Pillow drawing code and renders it locally - no image API, no GPU.
+   - 网页版 (web console): 设置 -> 网页启动版 -> 开启网页版, then open the URL.
+
+5. If something breaks
+   - Look at agent.log first; 设置 -> 安全与隐私 -> 校验文件完整性 to verify files.
+   - Nothing is uploaded: no telemetry, no analytics, keys stay encrypted locally.
+
+More (Chinese) details: 使用说明.txt / README.md / Docs\更新日志.md
+=================================================
